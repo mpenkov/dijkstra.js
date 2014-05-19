@@ -174,14 +174,10 @@
           .data(graph.links)
           .enter();
       var linkLines = link.append("line")
-          .attr("class", "link-line")
-          .attr("source", function(d) { return d.source; })
-          .attr("target", function(d) { return d.target; });
+          .attr("class", "link-line");
       var linkText = link.append("text")
           .attr("class", "link-text")
           .attr("text-anchor", "middle")
-          .attr("source", function(d) { return d.source; })
-          .attr("target", function(d) { return d.target; })
           .text(function(d) {
             return d.value;
           });
