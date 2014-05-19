@@ -7,7 +7,7 @@ function Dijkstra(graph, srcNode, dstNode) {
     this.previous = [];
     this.PQ = new MinHeap();
 
-    for (var v = 1; v < graph.length; ++v) {
+    for (var v = 0; v < graph.length; ++v) {
         if (v != srcNode) {
             this.dist[v] = Number.POSITIVE_INFINITY;
         }
