@@ -29,8 +29,11 @@
   </style>
 </head>
   <body>
-  <button onclick="step()">Step</button>
-  <script src="http://d3js.org/d3.v3.min.js"></script>
+  <p>
+    <button id="btnStep">Step</button>
+  </p>
+  <script src="d3.v3.min.js"></script>
+  <script src="jquery-1.11.1.min.js"></script>
   <script src="min-heap.js"></script>
   <script src="dijkstra-interactive.js"></script>
   <script>
@@ -85,8 +88,63 @@
         .attr("width", width)
         .attr("height", height);
 
+    var svg2 = d3.select("body").append("svg")
+        .attr("width", width)
+        .attr("height", height);
+
+    function drawHeap() {
+      svg2.selectAll("*").remove();
+
+      var nodes = [];
+      var links = [];
+
+      var heapNodes = dijkstra.PQ.nodes;
+
+      var addHeapNode = function(i, x, y, width, dy, parentX, parentY) {
+        var node = heapNodes[i];
+        if (node === undefined) {
+          return;
+        }
+        nodes.push({value: node.value, key: node.key, x: x, y: y});
+        if (parentX && parentY) {
+          links.push({x1: x, y1: y, x2: parentX, y2: parentY});
+        }
+        addHeapNode(i*2,   x-width/4, y+dy, width/2, dy, x, y);
+        addHeapNode(i*2+1, x+width/4, y+dy, width/2, dy, x, y);
+      }
+
+      dy = 50;
+      addHeapNode(1, width/2, dy, width, dy);
+
+      var svgLink = svg2.selectAll(".link")
+        .data(links)
+        .enter()
+        .append("line")
+        .attr("class", "link-line")
+        .attr("x1", function(d) { return d.x1; })
+        .attr("y1", function(d) { return d.y1; })
+        .attr("x2", function(d) { return d.x2; })
+        .attr("y2", function(d) { return d.y2; });
+
+      var svgNode = svg2.selectAll(".node")
+        .data(nodes)
+        .enter()
+        .append("g")
+        .attr("transform", function(d) {return "translate(" + d.x + "," + d.y + ")";});
+      svgNode.append("circle")
+        .attr("class", "node")
+        .attr("r", 25);
+      svgNode.append("text")
+        .attr("text-anchor", "middle")
+        .text(function(d) {
+          var key = d.key === Number.POSITIVE_INFINITY ? "\u221e" : "" + d.key;
+          return d.value + ":" + key;
+        });
+    }
+
     function step() {
       var result = dijkstra.step();
+      drawHeap();
       if (result) {
         var shortest = dijkstra.shortestPath();
         console.debug(shortest.distance);
@@ -223,6 +281,8 @@
     }
 
     drawGraph(graph);
+
+    $("#btnStep").click(step);
   </script>
 </body>
 </html>
