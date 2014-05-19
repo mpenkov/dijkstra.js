@@ -4,13 +4,26 @@
   <meta charset="utf-8">
   <style>
   .node {
-    stroke: #fff;
-    stroke-width: 1.5px;
+    stroke: black;
+    stroke-width: 2px;
+    fill: white;
   }
+  .source { fill: red; }
+  .destination { fill: blue }
+  .current { fill: green; }
+  .neighbor { fill: purple; }
+  .intermediate { fill: orange; }
+
   .link-line {
-    stroke: #999;
+    stroke: black;
     stroke-opacity: .6;
   }
+  .link-text {
+    stroke: black;
+    stroke-opacity: 1.0;
+  }
+  .active { stroke: red; }
+  .intermediate { fill: orange; stroke: orange; }
   </style>
 </head>
   <body>
@@ -75,16 +88,16 @@
       if (result) {
         var shortest = dijkstra.shortestPath();
         console.debug(shortest.distance);
-        svg.selectAll(".node").style("fill", "white");
+        svg.selectAll(".node").attr("class", "node");
         svg.selectAll(".node")
           .filter(function(d) {return shortest.nodes.indexOf(d.name) != -1;})
-          .style("fill", "orange");
+          .attr("class", "node intermediate");
         svg.selectAll(".node")
           .filter(function(d) {return d.name === dijkstra.srcNode;})
-          .style("fill", "red");
+          .attr("class", "node source");
         svg.selectAll(".node")
           .filter(function(d) {return d.name === dijkstra.dstNode;})
-          .style("fill", "blue");
+          .attr("class", "node destination");
 
         var inter = function(d) {
           //
@@ -102,23 +115,23 @@
           return false;
         };
 
-        svg.selectAll(".link-text").style("fill", "black");
+        svg.selectAll(".link-text").attr("class", "link-text");
         svg.selectAll(".link-text")
           .filter(inter)
-          .style("fill", "red");
-        svg.selectAll(".link-line").style("stroke", "");
+          .attr("class", "link-text active");
+        svg.selectAll(".link-line").attr("class", "link-line");
         svg.selectAll(".link-line")
           .filter(inter)
-          .style("stroke", "red");
+          .attr("class", "link-line active");
         return;
       }
 
       var node = svg.selectAll(".node");
-      node.style("fill", "white");
+      node.attr("class", "node");
       node.filter(function(d) { return d.name === dijkstra.u ; })
-        .style("fill", "green");
+        .attr("class", "node current");
       node.filter(function(d) { return d.name === dijkstra.v ; })
-        .style("fill", "purple");
+        .attr("class", "node neighbor");
 
       var currentFilter = function(d) { 
         var src = d.source.index+1;
@@ -128,12 +141,12 @@
       };
 
       var linkText = svg.selectAll(".link-text");
-      linkText.style("fill", "black");
-      linkText.filter(currentFilter).style("fill", "red");
+      linkText.attr("class", "link-text");
+      linkText.filter(currentFilter).attr("class", "link-text active");
 
       var linkLine = svg.selectAll(".link-line");
-      linkLine.style("stroke", "");
-      linkLine.filter(currentFilter).style("stroke", "red");
+      linkLine.attr("class", "link-line");
+      linkLine.filter(currentFilter).attr("class", "link-line active");
     }
 
     function graph2json(g) {
@@ -167,8 +180,7 @@
       var linkLines = link.append("line")
           .attr("class", "link-line")
           .attr("source", function(d) { return d.source; })
-          .attr("target", function(d) { return d.target; })
-          .style("stroke-width", "2");
+          .attr("target", function(d) { return d.target; });
       var linkText = link.append("text")
           .attr("class", "link-text")
           .attr("text-anchor", "middle")
@@ -187,15 +199,13 @@
       // Add a circle element to the previously added g element.
       node
           .append("circle")
-          .attr("class", "node")
-          .attr("r", 20)
-          .style("fill", function (d) {
-            if (d.name === srcNode) return "red";
-            else if (d.name === dstNode) return "blue";
-            return "white";
+          .attr("class", function(d) {
+              cls = "node";
+              if (d.name === srcNode) cls += " source";
+              else if (d.name === dstNode) cls += " destination";
+              return cls;
           })
-          .style("stroke", "black")
-          .style("stroke-width", 2);
+          .attr("r", 20);
       // Add a text element to the previously added g element.
       node
           .append("text")
