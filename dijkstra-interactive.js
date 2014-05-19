@@ -16,7 +16,9 @@ function Dijkstra(graph, srcNode, dstNode) {
 
     this.visited = {};
     this.u = undefined;
+    this.neighbors = [];
     this.v = undefined;
+    this.currentNeighbor = undefined;
     this.complete = false;
 }
 
@@ -36,35 +38,42 @@ Dijkstra.prototype = {
                 return this.complete;
             }
             this.u = this.PQ.extractMin();
+            this.neighbors = undefined;
             this.v = undefined;
+            this.currentNeighbor = undefined;
+            return false;
+        }
+
+        if (this.neighbors === undefined) {
+            this.neighbors = [];
+            for (var v = 0; v < this.graph.length; ++v) {
+                if (v in this.visited || v === this.u || this.graph[this.u][v] == Number.POSITIVE_INFINITY) {
+                    continue;
+                }
+                this.neighbors.push(v);
+            }
+            return false;
         }
 
         //
         // Examine the next neighbor of u.
         //
-        if (this.v === undefined) {
-            this.v = 1;
+        if (this.currentNeighbor === undefined) {
+            this.currentNeighbor = 0;
         } else {
-            this.v += 1;
-            if (this.v === this.graph.length) {
-                //
-                // We've looked at all the potential neighbors of u.
-                // Move on to the next possible u.
-                //
-                this.visited[this.u] = true;
-                this.u = undefined;
-                this.v = undefined;
-                return this.step();
-            }
+            this.currentNeighbor += 1;
         }
-
-        if (this.v in this.visited || this.v === this.u || this.graph[this.u][this.v] == Number.POSITIVE_INFINITY) {
+        if (this.currentNeighbor === this.neighbors.length) {
             //
-            // This isn't a neighbor we care about. Move on.
+            // We've looked at all the potential neighbors of u.
+            // Move on to the next possible u.
             //
+            this.visited[this.u] = true;
+            this.u = undefined;
             return this.step();
         }
 
+        this.v = this.neighbors[this.currentNeighbor];
         var alt = this.dist[this.u] + this.graph[this.u][this.v];
         if (alt < this.dist[this.v]) {
             this.dist[this.v] = alt;

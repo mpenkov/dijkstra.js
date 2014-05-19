@@ -2,32 +2,34 @@
 <html>
 <head>
   <meta charset="utf-8">
+  <!-- http://html-color-codes.info/ -->
   <style>
-  .node {
-    stroke: black;
-    stroke-width: 2px;
-    fill: white;
-  }
-  .source { fill: red; }
-  .destination { fill: blue }
-  .current { fill: green; }
-  .neighbor { fill: purple; }
-  .intermediate { fill: orange; }
+    svg { border: 1px solid black; }
+    .node {
+      stroke: black;
+      stroke-width: 2px;
+      fill: white;
+    }
+    .source { fill: red; }
+    .destination { fill: blue }
+    .current { fill: #8000ff; }
+    .neighbor { fill: #e2a9f3; }
+    .intermediate { fill: orange; }
 
-  .link-line {
-    stroke: black;
-    stroke-opacity: .6;
-  }
-  .link-text {
-    stroke: black;
-    stroke-opacity: 1.0;
-  }
-  .active { stroke: red; }
-  .intermediate { fill: orange; stroke: orange; }
+    .link-line {
+      stroke: black;
+      stroke-opacity: .6;
+    }
+    .link-text {
+      stroke: black;
+      stroke-opacity: 1.0;
+    }
+    .active { stroke: red; }
+    .intermediate { fill: orange; stroke: orange; }
   </style>
 </head>
   <body>
-  <button onclick="step()">Click me</button>
+  <button onclick="step()">Step</button>
   <script src="http://d3js.org/d3.v3.min.js"></script>
   <script src="min-heap.js"></script>
   <script src="dijkstra-interactive.js"></script>
@@ -126,7 +128,7 @@
       node.attr("class", "node");
       node.filter(function(d) { return d.name === dijkstra.u ; })
         .attr("class", "node current");
-      node.filter(function(d) { return d.name === dijkstra.v ; })
+      node.filter(function(d) { return dijkstra.neighbors && dijkstra.neighbors.indexOf(d.name) != -1; })
         .attr("class", "node neighbor");
 
       var currentFilter = function(d) { 
