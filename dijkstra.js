@@ -1,9 +1,3 @@
-function Dijkstra(graph) {
-    this.graph = graph;
-    this.srcNode = srcNode;
-    this.dstNode = dstNode;
-}
-
 function dijkstra(graph, srcNode, destNode) {
     var dist = [];
     dist[srcNode] = 0;
