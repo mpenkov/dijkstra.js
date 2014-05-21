@@ -43,26 +43,19 @@ MinHeap.prototype = {
         if (minNode === undefined) {
             throw new Error("Empty heap");
         }
-        var i = 1;
-        while (true) {
-            this.nodes[i] = undefined;
-
-            var leftNode = this.nodes[i*2];
-            var rightNode = this.nodes[i*2+1];
-            if (leftNode === undefined && rightNode == undefined) {
+        this.nodes[1] = undefined;
+        var i;
+        for (i = this.nodes.length-1; i > 0; --i) {
+            if (this.nodes[i] != undefined) {
                 break;
             }
-
-            var next_i;
-            if (leftNode && rightNode) {
-                next_i = leftNode.key < rightNode.key ? i*2 : i*2+1;
-            } else {
-                next_i = leftNode ? i*2 : i*2+1;
-            }
-            this.nodes[i] = this.nodes[next_i];
-            i = next_i;
         }
-        return minNode.value;
+        if (i > 1) {
+            this.nodes[1] = this.nodes[i];
+            this.nodes[i] = undefined;
+            this.percolateDownwards(1);
+        }
+        return minNode;
     },
     percolateUpwards: function(i) {
         while (true) {
@@ -78,6 +71,30 @@ MinHeap.prototype = {
             this.nodes[i] = parentNode;
             this.nodes[parentIndex] = currentNode;
             i = parentIndex;
+        }
+    },
+    percolateDownwards: function(i) {
+        while (true) {
+            var node = this.nodes[i];
+            var leftNode = this.nodes[i*2];
+            var rightNode = this.nodes[i*2+1];
+            var next_i = i;
+            if (leftNode && rightNode) {
+                var j = leftNode.key < rightNode.key ? i*2 : i*2+1;
+                if (this.nodes[j].key < node.key) {
+                    next_i = j;
+                }
+            } else if (leftNode && leftNode.key < node.key) {
+                next_i = i*2;
+            } else if (rightNode && rightNode.key < node.key) {
+                next_i = i*2+1;
+            }
+            if (i === next_i) {
+                return;
+            }
+            this.nodes[i] = this.nodes[next_i];
+            this.nodes[next_i] = node;
+            i = next_i;
         }
     },
     obeysHeapProperty: function() {
@@ -100,5 +117,15 @@ MinHeap.prototype = {
             }
         }
         throw new Error("Value is not in the heap");
+    },
+    peakMin: function() {
+        var minNode = this.nodes[1];
+        if (minNode === undefined) {
+            throw new Error("Empty heap");
+        }
+        //
+        // TODO: deep copy?
+        //
+        return minNode;
     }
 };

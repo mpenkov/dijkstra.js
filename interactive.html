@@ -5,81 +5,38 @@
   <!-- http://html-color-codes.info/ -->
   <style>
     svg { border: 1px solid black; }
-    .node {
-      stroke: black;
-      stroke-width: 2px;
-      fill: white;
-    }
-    .source { fill: red; }
-    .destination { fill: blue }
-    .current { fill: #8000ff; }
-    .neighbor { fill: #e2a9f3; }
-    .intermediate { fill: orange; }
-
-    .link-line {
-      stroke: black;
-      stroke-opacity: .6;
-    }
-    .link-text {
-      stroke: black;
-      stroke-opacity: 1.0;
-    }
+    .node { stroke: black; stroke-width: 2px; fill: white; }
+    .source { stroke: green; }
+    .destination { stroke: blue }
+    .A { fill: #F5A9F2; }
+    .B { fill: #A9BCF5; }
+    .current { stroke: red; }
+    .intermediate { fill: #CEF6D8; }
+    .link-line { stroke: black; stroke-opacity: .6; }
+    .link-text { stroke: black; stroke-opacity: 1.0; }
     .active { stroke: red; }
-    .intermediate { fill: orange; stroke: orange; }
   </style>
 </head>
   <body>
   <p>
+    <button id="btnGraph1">Graph 1</button>
+    <button id="btnGraph2">Graph 2</button>
+    <button id="btnGraph3">Graph 3</button>
+    <input id="numNodes" type="number" min="2" max="15" value="9"></input>
+    <input id="numEdgeDensity" type="number" min="0" max="1" value="0.85"></input>
+    <button id="btnRegenerate">Regenerate graph</button>
     <button id="btnStep">Step</button>
   </p>
   <script src="d3.v3.min.js"></script>
   <script src="jquery-1.11.1.min.js"></script>
   <script src="min-heap.js"></script>
+  <script src="create-graph.js"></script>
   <script src="dijkstra-interactive.js"></script>
   <script>
-    function createGraph() {
-      //
-      // Return the graph at http://en.wikipedia.org/wiki/File:Dijkstra_Animation.gif
-      // as a adjacency matrix.
-      //
-      var g = [];
-      for (var i = 0; i < 6; ++i) {
-          g[i] = [];
-          g[i][i] = 0;
-      }
-      g[0][1] = 7;
-      g[0][2] = 9;
-      g[0][3] = Number.POSITIVE_INFINITY;
-      g[0][4] = Number.POSITIVE_INFINITY;
-      g[0][5] = 14;
-
-      g[1][2] = 10;
-      g[1][3] = 15;
-      g[1][4] = Number.POSITIVE_INFINITY;
-      g[1][5] = Number.POSITIVE_INFINITY;
-
-      g[2][3] = 11;
-      g[2][4] = Number.POSITIVE_INFINITY;
-      g[2][5] = 2;
-
-      g[3][4] = 6;
-      g[3][5] = Number.POSITIVE_INFINITY;
-
-      g[4][5] = 9;
-
-      for (var i = 0; i < 6; ++i) {
-          for (var j = 0; j < i; ++j) {
-              g[i][j] = g[j][i];
-          }
-      }
-      return g;
-    }
-
-    var srcNode = 0;
-    var dstNode = 4;
-
-    var graph = createGraph();
-    dijkstra = new Dijkstra(graph, srcNode, dstNode);
+    var maxLength = 20;
+    var srcNode;
+    var dstNode;
+    var dijkstra;
 
     var width = 640,
       height = 480;
@@ -92,13 +49,13 @@
         .attr("width", width)
         .attr("height", height);
 
-    function drawHeap() {
+    function redrawHeap() {
       svg2.selectAll("*").remove();
 
       var nodes = [];
       var links = [];
 
-      var heapNodes = dijkstra.PQ.nodes;
+      var heapNodes = dijkstra.B.nodes;
 
       var addHeapNode = function(i, x, y, width, dy, parentX, parentY) {
         var node = heapNodes[i];
@@ -113,8 +70,8 @@
         addHeapNode(i*2+1, x+width/4, y+dy, width/2, dy, x, y);
       }
 
-      dy = 50;
-      addHeapNode(1, width/2, dy, width, dy);
+      var dy = 100;
+      addHeapNode(1, width/2, dy/2, width, dy);
 
       var svgLink = svg2.selectAll(".link")
         .data(links)
@@ -144,22 +101,25 @@
 
     function step() {
       var result = dijkstra.step();
-      drawHeap();
+      //console.debug(result);
+      redrawHeap();
+
+      svg.selectAll(".node.current").classed("current", false);
+      svg.selectAll(".link-text.active").classed("active", false);
+      svg.selectAll(".link-line.active").classed("active", false);
+
+      svg.selectAll(".node")
+        .filter(function(d) { return d.name in dijkstra.A })
+        .classed("A", true)
+        .classed("B", false);
+
       if (result) {
         var shortest = dijkstra.shortestPath();
-        console.debug(shortest.distance);
-        svg.selectAll(".node").attr("class", "node");
         svg.selectAll(".node")
           .filter(function(d) {return shortest.nodes.indexOf(d.name) != -1;})
-          .attr("class", "node intermediate");
-        svg.selectAll(".node")
-          .filter(function(d) {return d.name === dijkstra.srcNode;})
-          .attr("class", "node source");
-        svg.selectAll(".node")
-          .filter(function(d) {return d.name === dijkstra.dstNode;})
-          .attr("class", "node destination");
+          .classed("intermediate", true);
 
-        var inter = function(d) {
+        var isIntermediateNode = function(d) {
           var src = d.source.index;
           var dst = d.target.index;
           for (var i = 0; i < shortest.edges.length; ++i) {
@@ -170,39 +130,35 @@
           }
           return false;
         };
-
-        svg.selectAll(".link-text").attr("class", "link-text");
-        svg.selectAll(".link-text")
-          .filter(inter)
-          .attr("class", "link-text active");
-        svg.selectAll(".link-line").attr("class", "link-line");
-        svg.selectAll(".link-line")
-          .filter(inter)
-          .attr("class", "link-line active");
+        svg.selectAll(".link-text").filter(isIntermediateNode).classed("active", true);
+        svg.selectAll(".link-line").filter(isIntermediateNode).classed("active", true);
         return;
       }
 
       var node = svg.selectAll(".node");
-      node.attr("class", "node");
-      node.filter(function(d) { return d.name === dijkstra.u ; })
-        .attr("class", "node current");
-      node.filter(function(d) { return dijkstra.neighbors && dijkstra.neighbors.indexOf(d.name) != -1; })
-        .attr("class", "node neighbor");
+      node.filter(function(d) { return d.name === dijkstra.JT }).classed("current", true);
+      node.filter(function(d) { return dijkstra.neighbors && dijkstra.neighbors.indexOf(d.name) != -1 })
+        .classed("B", "true");
 
-      var currentFilter = function(d) { 
+      var isCurrentEdge = function(d) { 
         var src = d.source.index;
         var dst = d.target.index;
-        return (src === dijkstra.u && dst === dijkstra.v) ||
-               (dst === dijkstra.u && src === dijkstra.v);
+        return (src === dijkstra.JT && dst === dijkstra.R) ||
+               (dst === dijkstra.JT && src === dijkstra.R);
       };
 
-      var linkText = svg.selectAll(".link-text");
-      linkText.attr("class", "link-text");
-      linkText.filter(currentFilter).attr("class", "link-text active");
+      console.debug(dijkstra);
 
-      var linkLine = svg.selectAll(".link-line");
-      linkLine.attr("class", "link-line");
-      linkLine.filter(currentFilter).attr("class", "link-line active");
+      svg.selectAll(".link-text").filter(isCurrentEdge).classed("active", true);
+      svg.selectAll(".link-line").filter(isCurrentEdge).classed("active", true);
+      svg.selectAll(".node-text")
+        .text(function(d) {
+          var dist = dijkstra.dist[d.name];
+          if (dist === Number.POSITIVE_INFINITY) {
+            dist = "\u221e";
+          }
+          return d.name + ":" + dist;
+        });
     }
 
     function graph2json(g) {
@@ -224,8 +180,8 @@
     function drawGraph(graph) {
       graph = graph2json(graph);
       var force = d3.layout.force()
-          .charge(-1000)
-          .linkDistance(200)
+          .charge(-400)
+          .linkDistance(100)
           .size([width, height])
           .nodes(graph.nodes)
           .links(graph.links);
@@ -238,17 +194,13 @@
       var linkText = link.append("text")
           .attr("class", "link-text")
           .attr("text-anchor", "middle")
-          .text(function(d) {
-            return d.value;
-          });
+          .text(function(d) { return d.value; });
 
       var node = svg.selectAll(".node")
           .data(graph.nodes)
           .enter()
-          // Add one g element for each data node here.
           .append("g");
 
-      // Add a circle element to the previously added g element.
       node
           .append("circle")
           .attr("class", function(d) {
@@ -257,13 +209,14 @@
               else if (d.name === dstNode) cls += " destination";
               return cls;
           })
-          .attr("r", 20);
-      // Add a text element to the previously added g element.
+          .attr("r", 25);
       node
           .append("text")
+          .attr("class", "node-text")
           .attr("text-anchor", "middle")
-          .text(function(d) {
-            return d.name;
+          .text(function(d) { 
+            var dist = d.name === dijkstra.P ? "0" : "\u221e";
+              return d.name + ":" + dist;
           });
       node.call(force.drag);
 
@@ -280,9 +233,53 @@
       force.start();
     }
 
-    drawGraph(graph);
+    function regenerateGraph() {
+      var numNodes = $("#numNodes").val();
+      srcNode = Math.floor(Math.random()*numNodes);
+      dstNode = srcNode;
+      do {
+        dstNode = Math.floor(Math.random()*numNodes);
+      } while (dstNode === srcNode);
+
+      var graph = createRandomGraph(numNodes, $("#numEdgeDensity").val(), 20);
+      dijkstra = new Dijkstra(graph, srcNode, dstNode);
+      svg.selectAll("*").remove();
+      drawGraph(graph);
+      redrawHeap();
+    }
+
+    regenerateGraph();
+    redrawHeap();
 
     $("#btnStep").click(step);
+    $("#btnRegenerate").click(regenerateGraph);
+    $("#btnGraph1").click(function() { 
+      srcNode = 0;
+      dstNode = 4;
+      graph = createGraph1();
+      dijkstra = new Dijkstra(graph, srcNode, dstNode);
+      svg.selectAll("*").remove();
+      drawGraph(graph);
+      redrawHeap();
+    });
+    $("#btnGraph2").click(function() { 
+      srcNode = 0;
+      dstNode = 4;
+      graph = createGraph2();
+      dijkstra = new Dijkstra(graph, srcNode, dstNode);
+      svg.selectAll("*").remove();
+      drawGraph(graph);
+      redrawHeap();
+    });
+    $("#btnGraph3").click(function() { 
+      srcNode = 0;
+      dstNode = 5;
+      graph = createGraph3();
+      dijkstra = new Dijkstra(graph, srcNode, dstNode);
+      svg.selectAll("*").remove();
+      drawGraph(graph);
+      redrawHeap();
+    });
   </script>
 </body>
 </html>

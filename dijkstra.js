@@ -1,38 +1,28 @@
-function dijkstra(graph, srcNode, destNode) {
+function dijkstra(G, P, Q) {
     var dist = [];
-    dist[srcNode] = 0;
     var previous = [];
-    PQ = new MinHeap();
-    for (var v = 1; v < graph.length; ++v) {
-        if (v != srcNode) {
-            dist[v] = Number.POSITIVE_INFINITY;
+    B = new MinHeap();
+    for (var R = 0; R < G.length; ++R) {
+        if (R == P) {
+            dist[R] = 0;
+        } else {
+            dist[R] = Number.POSITIVE_INFINITY;
         }
-        PQ.insert(v, dist[v]);
+        B.insert(R, dist[R]);
     }
-
-    while (PQ.size()) {
-        var u = PQ.extractMin();
-        for (v = 1; v < graph.length; ++v) {
-            if (u == v || graph[u][v] == Number.POSITIVE_INFINITY) {
+    while (B.size()) {
+        var JT = B.extractMin().value;
+        for (var R = 0; R < G.length; ++R) {
+            if (JT == R || G[JT][R] == Number.POSITIVE_INFINITY) {
                 continue;
             }
-            var alt = dist[u] + graph[u][v];
-            if (alt < dist[v]) {
-                dist[v] = alt;
-                previous[v] = u;
-                PQ.decreaseKey(v, alt);
+            var alt = dist[JT] + G[JT][R];
+            if (alt < dist[R]) {
+                dist[R] = alt;
+                previous[R] = JT;
+                B.decreaseKey(R, alt);
             }
         }
     }
-
-    var result = 0;
-    while (true) {
-        var prevNode = previous[destNode];
-        result += graph[destNode][prevNode];
-        destNode = prevNode;
-        if (destNode == srcNode) {
-            break;
-        }
-    }
-    return result;
+    return dist[Q];
 }

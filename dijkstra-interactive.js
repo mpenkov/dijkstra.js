@@ -1,23 +1,24 @@
-function Dijkstra(graph, srcNode, dstNode) {
-    this.graph = graph;
-    this.srcNode = srcNode;
-    this.dstNode = dstNode;
+function Dijkstra(G, P, Q) {
+    this.G = G;
+    this.P = P;
+    this.Q = Q;
     this.dist = [];
-    this.dist[srcNode] = 0; 
+    this.dist[P] = 0; 
     this.previous = [];
-    this.PQ = new MinHeap();
 
-    for (var v = 0; v < graph.length; ++v) {
-        if (v != srcNode) {
+    this.A = {}
+    this.B = new MinHeap();
+
+    for (var v = 0; v < G.length; ++v) {
+        if (v != P) {
             this.dist[v] = Number.POSITIVE_INFINITY;
         }
-        this.PQ.insert(v, this.dist[v]);
+        this.B.insert(v, this.dist[v]);
     }
 
-    this.visited = {};
-    this.u = undefined;
-    this.neighbors = [];
-    this.v = undefined;
+    this.JT = undefined;
+    this.neighbors = undefined;
+    this.R = undefined;
     this.currentNeighbor = undefined;
     this.complete = false;
 }
@@ -25,38 +26,42 @@ function Dijkstra(graph, srcNode, dstNode) {
 Dijkstra.prototype = {
     constructor: Dijkstra,
     step: function() {
+        if (this.complete) {
+            return true;
+        }
         //
         // Perform a single iteration of the inner loop of Dijkstra's algorithm.
         // Returns true if the algorithm has completed, false otherwise.
         //
-        if (this.u === undefined) {
+        if (this.JT === undefined) {
             //
             // Try to pull a new node from the priority queue.
             //
-            if (this.PQ.size() === 0) {
+            if (this.B.size() === 0 || this.B.peakMin().key === Number.POSITIVE_INFINITY || this.B.peakMin().value === this.Q) {
                 this.complete = true;
-                return this.complete;
+                return true;
             }
-            this.u = this.PQ.extractMin();
+            this.JT = this.B.extractMin().value;
+            this.A[this.JT] = true;
             this.neighbors = undefined;
-            this.v = undefined;
+            this.R = undefined;
             this.currentNeighbor = undefined;
             return false;
         }
 
         if (this.neighbors === undefined) {
             this.neighbors = [];
-            for (var v = 0; v < this.graph.length; ++v) {
-                if (v in this.visited || v === this.u || this.graph[this.u][v] == Number.POSITIVE_INFINITY) {
+            for (var R = 0; R < this.G.length; ++R) {
+                if (R in this.A || R === this.JT || this.G[this.JT][R] == Number.POSITIVE_INFINITY) {
                     continue;
                 }
-                this.neighbors.push(v);
+                this.neighbors.push(R);
             }
             return false;
         }
 
         //
-        // Examine the next neighbor of u.
+        // Examine the next neighbor of JT.
         //
         if (this.currentNeighbor === undefined) {
             this.currentNeighbor = 0;
@@ -68,40 +73,38 @@ Dijkstra.prototype = {
             // We've looked at all the potential neighbors of u.
             // Move on to the next possible u.
             //
-            this.visited[this.u] = true;
-            this.u = undefined;
-            return this.step();
+            this.JT = undefined;
+            this.neighbors = undefined;
+            return false;
         }
 
-        this.v = this.neighbors[this.currentNeighbor];
-        var alt = this.dist[this.u] + this.graph[this.u][this.v];
-        if (alt < this.dist[this.v]) {
-            this.dist[this.v] = alt;
-            this.previous[this.v] = this.u;
-            this.PQ.decreaseKey(this.v, alt);
+        this.R = this.neighbors[this.currentNeighbor];
+        var alt = this.dist[this.JT] + this.G[this.JT][this.R];
+        if (alt < this.dist[this.R]) {
+            this.dist[this.R] = alt;
+            this.previous[this.R] = this.JT;
+            this.B.decreaseKey(this.R, alt);
         }
 
         return false;
     },
     shortestPath: function() {
-        if (!this.complete) {
-            throw new Error("Algorithm has not completed yet");
-        }
-        var total = 0;
-        var tmpNode = this.dstNode;
-        var nodes = [tmpNode];
+        var nodes = [];
         var edges = [];
-        while (true) {
-            var prevNode = this.previous[tmpNode];
-            total += this.graph[tmpNode][prevNode];
-            edges.push({src: tmpNode, dst: prevNode});
+        if (this.dist[this.Q] != Number.POSITIVE_INFINITY) {
+            var tmpNode = this.Q;
+            nodes.push(tmpNode);
+            while (true) {
+                var prevNode = this.previous[tmpNode];
+                edges.push({src: tmpNode, dst: prevNode});
 
-            tmpNode = prevNode;
-            nodes.push(prevNode);
-            if (tmpNode == this.srcNode) {
-                break;
+                tmpNode = prevNode;
+                nodes.push(prevNode);
+                if (tmpNode == this.P) {
+                    break;
+                }
             }
         }
-        return {edges: edges, nodes: nodes, distance: total}
+        return {edges: edges, nodes: nodes, distance: this.dist[this.Q]}
     }
 };
