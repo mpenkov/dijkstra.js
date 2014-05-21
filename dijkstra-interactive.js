@@ -37,7 +37,7 @@ Dijkstra.prototype = {
             //
             // Try to pull a new node from the priority queue.
             //
-            if (this.B.size() === 0 || this.B.peakMin().key === Number.POSITIVE_INFINITY || this.B.peakMin().value === this.Q) {
+            if (this.B.size() === 0 || this.B.peekMin().key === Number.POSITIVE_INFINITY || this.B.peekMin().value === this.Q) {
                 this.complete = true;
                 return true;
             }

@@ -11,6 +11,15 @@ test("insert", function() {
     equal(minHeap.size(), 2, "The size of the heap must increase");
 });
 
+test("peek", function() {
+    var minHeap = new MinHeap();
+    throws(function() {minHeap.peekMin()}, Error, "Heap should throw error on empty peek");
+    minHeap.insert("two", 2);
+    equal(minHeap.peekMin().value, "two");
+    minHeap.insert("one", 1);
+    equal(minHeap.peekMin().value, "one");
+});
+
 test("heap property", function() {
     var badHeap = new MinHeap();
     badHeap.nodes[1] = {key: 5}

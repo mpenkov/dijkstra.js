@@ -118,7 +118,7 @@ MinHeap.prototype = {
         }
         throw new Error("Value is not in the heap");
     },
-    peakMin: function() {
+    peekMin: function() {
         var minNode = this.nodes[1];
         if (minNode === undefined) {
             throw new Error("Empty heap");
